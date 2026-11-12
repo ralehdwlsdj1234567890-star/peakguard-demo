@@ -4,13 +4,14 @@
 **보드:** NUCLEO-F411RE (STM32F411RETx)  
 **개발 환경:** STM32CubeMX · STM32CubeIDE · Tektronix 오실로스코프
 
-교수님 [F103RB HC-SR04 실습](https://github.com/gotree94/STM32/tree/main/NUCLEO_F103RB/06.HC-SR04)을 참고하되, **내가 실제 사용한 보드는 STM32F411RE**다. **오전 실습에서는** TRIG 신호 생성과 오실로스코프 파형 관찰까지 진행했다. **ECHO 수신과 거리 측정은 같은 날 오후 수업에서 진행하기로 했다.** 본인 실습 화면에서 필요한 사진 **7장**을 선별해 아래에 직접 첨부했다. 이 기록에 첨부된 사진에는 ECHO 거리 측정 완료 결과가 아직 없다.
+교수님 [F103RB HC-SR04 실습](https://github.com/gotree94/STM32/tree/main/NUCLEO_F103RB/06.HC-SR04)을 참고하되, **내가 실제 사용한 보드는 STM32F411RE**다. **오전에는 TRIG 펄스 생성과 오실로스코프 관찰**, **오후에는 ECHO를 이용한 거리값 출력**을 진행했다. 오전 코드·파형 사진 7장과 오후 PuTTY 출력 화면 1장을 기록했다. 거리가 정확한지는 별도 검증이 필요하다.
 
 ## 1. STM32CubeMX 설정
 
 ![PA0 TRIGER1, TIM1 Prescaler 84-1](images/01_cubemx_gpio_tim1.webp)
 
-- **PA0:** `TRIGER1`이라는 GPIO Output 이름으로 설정된 화면
+- **PA0 (Arduino A0):** `TRIGER1`이라는 GPIO Output으로 설정해 **TRIG 신호를 출력**했다.
+- **PA1 (Arduino A1):** 오후 실습에서 **ECHO 신호를 받는 입력 핀**으로 사용했다(사용자가 확인한 연결). 오후 코드의 GPIO 초기화 설정은 별도 사진으로 확인하지 못했다.
 - **TIM1:** Internal Clock, Prescaler `84-1`, Auto Reload `65535`
 
 ![클록 84MHz 설정](images/02_cubemx_clock_84mhz.webp)
@@ -113,12 +114,50 @@ delay_us(200);    // 실제 호출한 사용자 지연 함수
 
 CH2 **10.0 µs/div** 화면에서 짧은 High 펄스가 관찰된다. 10 µs 수준의 펄스로 보이지만 사진에 표시된 정확한 펄스 폭 측정값은 없으므로 확정 숫자로 기록하지 않는다.
 
-## 5. 오전 진행 내용과 오후 실습 계획
+## 5. 오후 ECHO 거리 측정 결과
 
-**완료:** F411RE CubeMX 설정, TIM1 1 µs 분주, `timer_start()`·`delay_us()`·`trig()` 작성, 반복 펄스 및 단일 펄스 파형 촬영.
+**연결:** PA0(A0) = **TRIG 출력**, PA1(A1) = **ECHO 입력**. 오전에는 TRIG 펄스만 확인했고, 오후에는 ECHO 신호를 이용한 거리 결과가 **PuTTY(COM8)** 창에 출력되는 것을 확인했다.
 
-**오후 실습 예정:** 오전 코드 사진에서 `echo()` 함수는 주석 처리돼 있다. 교수님 말씀에 따라 오후에는 ECHO 수신 핀 확인, 반사 시간 측정, 거리 계산 및 출력 과정을 배울 예정이다. 실제 수행 결과는 오후 실습 사진이나 코드가 확인된 뒤에 추가한다.
+![오후 HC-SR04 ECHO 거리 측정 — PuTTY COM8](images/08_putty_echo_distance.png)
 
-**참고:** 교수님 [HC-SR04 F103RB 예제](https://github.com/gotree94/STM32/tree/main/NUCLEO_F103RB/06.HC-SR04)에는 ECHO 처리 및 거리 계산이 나오지만, **오전 촬영 자료만으로는 이 단계의 완료를 확인할 수 없다.** F103RB 설정값을 F411RE 설정값으로 그대로 옮기지 않았다.
+### PuTTY 출력에서 확인한 값
 
-*사진 출처: 본인이 촬영해 제공한 화면. GitHub 표시를 위해 WebP 형식으로 용량을 줄였으며, 원본의 측정값이나 코드 내용을 임의로 변경하지 않았다.*
+```text
+Ranging with HC-SR04
+Distance = 0(mm)
+Ranging with HC-SR04
+Distance = 1778(mm)
+Distance = 1781(mm)
+Distance = 0(mm)
+Distance = 361(mm)
+Distance = 311(mm)
+Distance = 0(mm)
+Distance = 1780(mm)
+Distance = 219(mm)
+...
+Distance = 167(mm)
+Distance = 222(mm)
+Distance = 1778(mm)
+Distance = 1781(mm)
+Distance = 223(mm)
+Distance = 187(mm)
+Distance = 0(mm)
+Distance = 167(mm)
+```
+
+코드에서 계산한 결과가 `Distance = ... (mm)` 형식으로 직렬 터미널에 표시됐다. **0mm가 반복되는 이유**, **약 167~361mm와 1,778~1,781mm 값이 교차하는 이유**는 현재 화면만으로 확정할 수 없다. 물체의 실제 거리·반사 조건·최종 코드가 제공되지 않았으므로 정확도 검증까지 완료한 것으로 쓰지 않는다.
+
+### 오전과 오후의 진행 범위
+
+| 시간 | 확인된 실습 |
+|---|---|
+| 오전 | TIM1 마이크로초 지연, `trig()` 작성, TRIG 펄스의 오실로스코프 관찰 |
+| 오후 | **A0(PA0) TRIG / A1(PA1) ECHO** 연결, PuTTY COM8로 거리값 출력 확인 |
+
+**주의:** 오전 사진에서는 `echo()` 함수가 주석 처리돼 있었다. 오후에는 실제 거리값이 출력됐으나 **오후 최종 `echo()` 함수의 소스코드와 오실로스코프 연결 상태**는 아직 확인하지 않았다. 따라서 오전 사진의 코드를 오후 최종 코드라고 설명하지 않는다.
+
+또한 오전의 `delay_us(200)` 반복은 TRIG 펄스 관찰용 코드다. 이 값이 오후 거리 측정 코드에서도 그대로 쓰였다고 단정하지 않는다. ECHO 왕복 시간을 받기 전에 새로운 TRIG를 지나치게 빨리 보내면 측정값이 불안정할 수 있으므로 최종 반복 간격을 확인할 필요가 있다.
+
+**참고:** 교수님 [HC-SR04 F103RB 예제](https://github.com/gotree94/STM32/tree/main/NUCLEO_F103RB/06.HC-SR04)는 학습 자료이고, 실제 사용한 MCU는 **STM32F411RE**다.
+
+*사진 출처: 본인이 촬영해 제공한 화면 8장. 오전 사진 7장은 WebP, 오후 PuTTY 캡처 1장은 PNG 파일로 정리했다. 측정값이나 코드 내용을 임의로 바꾸지 않았다.*
