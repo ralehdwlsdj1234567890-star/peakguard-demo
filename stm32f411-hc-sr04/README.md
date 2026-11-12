@@ -1,30 +1,25 @@
-# STM32F411 — HC-SR04 TRIG 신호 실습 (2026-11-12)
+# HC-SR04 — STM32F411RE TRIG 펄스 실습 (2026-11-12)
 
-STM32F411RE NUCLEO 보드에서 HC-SR04 초음파센서의 TRIG 펄스를 만드는 코드를 작성하고 오실로스코프로 신호를 관찰했다. 이 문서는 **직접 촬영한 화면에서 확인되는 내용만** 기록했다. ECHO를 이용한 거리 측정은 아직 완료된 것으로 기록하지 않는다.
+**환경:** NUCLEO-F411RE · STM32CubeMX / STM32CubeIDE · Tektronix 오실로스코프
 
-## 1. 실습 환경과 CubeMX 설정
+교수님 [NUCLEO-F103RB HC-SR04 예제](https://github.com/gotree94/STM32/tree/main/NUCLEO_F103RB/06.HC-SR04)를 참고해 **STM32F411RE에서 실제로 진행한 단계까지만** 기록했다. 오늘은 TRIG 펄스 출력과 오실로스코프 파형 확인까지 진행했다. F103RB 예제 전체를 완료한 것은 아니다.
 
-- 보드: **NUCLEO-F411RE / STM32F411RETx**
-- 개발 도구: STM32CubeMX, STM32CubeIDE
-- 계측기: Tektronix 오실로스코프
-- CubeMX 화면: **PA0 = TRIGER1**, GPIO Output
-- TIM1: Internal Clock, Prescaler **84-1**, Counter Period **65535**
-- 클록 설정: SYSCLK/HCLK **84 MHz**, APB1 **42 MHz**, APB2 타이머 **84 MHz**
+## 1. CubeMX 설정
 
-위 화면 설정대로라면 TIM1 카운터 주파수는 84 MHz / 84 = **1 MHz**이고, 카운터 1증가는 **1 μs**에 해당한다.
+| 항목 | 직접 촬영한 화면에서 확인한 설정 |
+|---|---|
+| MCU / 보드 | STM32F411RETx · NUCLEO-F411RE |
+| PA0 | `TRIGER1` / GPIO_Output |
+| TIM1 | Internal Clock, Prescaler `84-1`, Counter Period `65535` |
+| SYSCLK / HCLK | 84 MHz |
+| APB1 PCLK1 | 42 MHz |
+| APB2 PCLK2 / TIM1 clock | 84 MHz |
 
-## 2. 직접 작성한 코드
+따라서 TIM1은 **84 MHz ÷ 84 = 1 MHz**로 카운트한다. 카운터가 1 증가하는 시간은 이론적으로 **1 µs**다.
 
-### 변수 선언
+## 2. 작성한 코드
 
-```c
-#define HIGH 1
-#define LOW 0
-long unsigned int echo_time;
-int dist;
-```
-
-### TIM1 시작 및 마이크로초 지연
+### TIM1 시작과 µs 지연
 
 ```c
 void timer_start(void)
@@ -39,7 +34,7 @@ void delay_us(uint16_t us)
 }
 ```
 
-### TRIG 신호 출력
+### TRIG 출력
 
 ```c
 void trig(void)
@@ -50,9 +45,7 @@ void trig(void)
 }
 ```
 
-이 코드는 TRIG 핀을 High로 설정하고 약 10 μs 후 Low로 바꾸도록 작성한 것이다. 실제 펄스 폭을 10 μs로 측정했다는 뜻은 아니다.
-
-### 초기화와 반복문
+### main 반복문
 
 ```c
 MX_GPIO_Init();
@@ -69,26 +62,37 @@ while (1)
 }
 ```
 
-`delay_us(200)`은 코드상의 대기시간이다. 실제 반복 주기가 200 μs로 측정됐다고 단정할 수 없다. `printf` 출력은 UART2 전송 함수와 연결된 코드가 보인다.
+코드상 TRIG High 지연은 약 **10 µs**, 반복 사이 지연은 약 **200 µs**다. 실제 간격에는 함수 실행 오버헤드가 포함되므로 정확히 210 µs라고 단정하지 않는다.
 
-**주의:** 사진에 보이는 `echo()` 함수는 주석 처리된 상태다. ECHO의 High 시간을 읽고 거리를 계산하는 기능이 실행됐다고 쓰지 않는다.
+## 3. 직접 찍은 오실로스코프 화면 해석
 
-## 3. 오실로스코프 관찰
+- 반복 펄스 화면: CH2, 시간축 **100 µs/div**, 표시 주파수 **약 4.8 kHz**. 약 200 µs 지연을 반복하는 코드와 대략 일치한다.
+- 펄스 확대 화면: CH2, **10.0 µs/div**. 짧은 High 펄스가 보인다. **10 ms/div가 아니라 10 µs/div**이다.
+- 앞서 촬영한 자동 측정 화면에는 **1.976 ms? / 506.1 Hz?**가 표시되어 있다. 뒤의 4.8 kHz 화면과 조건이 같다는 근거는 없으므로 같은 측정값으로 합치지 않는다.
+- 프로브가 물린 **정확한 핀**은 사진만으로 확정할 수 없다. TRIG 핀의 직접 측정이라고 단정하지 않는다.
 
-직접 촬영한 CH2 화면에서는 짧은 펄스가 반복되는 모습과 시간축을 바꾼 화면이 확인된다.
+## 4. 실습 사진 선별
 
-| 화면 | 사진에서 읽히는 정보 |
+받은 화면 중 중복과 동일 파형의 배율만 다른 사진을 제외하고 **7장만** 기록용으로 선별했다.
+
+| 기록용 파일명 | 내용 |
 |---|---|
-| 자동 측정 | 첨두치 **3.36 V**, 주기 **1.976 ms?**, 주파수 **506.1 Hz?**, 평균치 **30.6 mV** |
-| 반복 펄스 | 100 μs/div 및 50 μs/div 시간축에서 좁은 펄스 반복 |
-| 단일 펄스 | 10 ms/div 화면에서 짧은 High 구간 확인 |
+| `01_cubemx_gpio_tim1.jpg` | PA0 출력 · TIM1 분주 |
+| `02_cubemx_clock_84mhz.jpg` | SYSCLK/HCLK 및 APB 클록 |
+| `03_delay_us_timer_code.jpg` | `timer_start()` · `delay_us()` |
+| `04_trig_function_code.jpg` | `trig()` 및 주석 처리된 `echo()` |
+| `05_main_loop_code.jpg` | 초기화 · `trig()` · `delay_us(200)` |
+| `06_scope_4p8khz_repeat.jpg` | 반복 펄스 |
+| `07_scope_10us_pulse.jpg` | 단일 펄스 확대 |
 
-측정 화면의 `?` 표시는 계측기가 표시한 그대로 남겼다. **CH2 프로브가 연결된 정확한 핀은 사진만으로 확정되지 않으므로**, 모든 파형을 TRIG 핀 측정값이라고 단정하지 않는다.
+**사진의 실제 파일 업로드는 아직 이 GitHub 경로에 반영되지 않았다.** 선별된 이미지 원본은 별도 업로드 패키지로 정리했다. 파일이 없는 상태에서 깨진 이미지 링크를 넣지 않았다.
 
-## 4. 오늘 확인한 것과 다음 확인 사항
+## 5. 완료한 내용과 다음 단계
 
-- **확인:** PA0의 TRIGER1 GPIO 설정, TIM1·클록 설정 화면, TRIG 펄스 생성 코드, 오실로스코프 CH2 펄스 파형
-- **추가 확인:** CH2 실제 측정 핀, TRIG 펄스 폭 커서 측정, 센서 권장 측정 간격, ECHO 입력 코드 및 거리 계산
-- **사진:** 직접 촬영한 원본 **13장**은 별도 정리한 실습 사진 패키지에 보관했다. 이 저장소 폴더에는 아직 사진 파일을 업로드하지 않았으므로 이미지가 있는 것처럼 표시하지 않는다.
+**현재까지 수행:** F411RE 핀·클록·타이머 설정, TIM1 기반 지연 함수, TRIG 출력 코드, CH2 펄스 사진 촬영.
 
-[이전 GPIO 실습](../stm32f411-gpio/README.md) · [교수님 STM32F411 GPIO_DOC](https://github.com/gotree94/STM32/tree/main/NUCLEO_F411RE/GPIO_DOC)
+**아직 미수행:** 사진에서 `echo()`는 주석 처리돼 있다. ECHO 시간 수신, 거리(mm/cm) 계산, 거리값 출력, 실측 거리 대조는 수행한 것으로 기록하지 않는다.
+
+> 교수님 F103RB 예제의 ECHO 측정·거리 계산·Node.js 화면은 **학습 예정 참고자료**다. F411RE 실습을 완료했다고 표기하지 않는다.
+
+[교수님 HC-SR04 실습](https://github.com/gotree94/STM32/tree/main/NUCLEO_F103RB/06.HC-SR04) · [전날 F411 GPIO 실습](../stm32f411-gpio/README.md)
