@@ -1,4 +1,4 @@
-# HC-SR04 — TRIG 펄스 실습 (STM32F411RE)
+# HC-SR04 — TRIG·ECHO 초음파 거리 측정 실습 (STM32F411RE)
 
 **실습일:** 2026-11-12  
 **보드:** NUCLEO-F411RE (STM32F411RETx)  
