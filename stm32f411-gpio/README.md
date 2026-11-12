@@ -114,10 +114,7 @@ GPIO 제어 코드를 실행하면 마이크로컨트롤러의 출력 핀 상태
 
 ## 5. 교수님 GPIO_DOC 복습 — STM32F411만
 
-아래 5개 접기식 항목은 교수님이 공개한 [GPIO_DOC](https://github.com/gotree94/STM32/tree/main/NUCLEO_F411RE/GPIO_DOC)에서 **F411에 해당하는 설명과 그림**을 바탕으로 정리했다. 그림은 교수님 원본 저장소의 이미지를 링크했다. **이 그림들은 직접 촬영한 실습 결과가 아니라 참고자료**다. 직접 진행한 실습은 위 1~4절에 따로 기록했다.
-
-
-아래는 [교수님 GPIO_DOC](https://github.com/gotree94/STM32/tree/main/NUCLEO_F411RE/GPIO_DOC)에서 **F411에 해당하는 설명과 그림**을 항목별로 다시 정리한 것이다. 그림은 수업 자료의 원본 링크로 표시하고, 위 1~5절의 실습 사진과 구분했다. 제목을 눌러 펼칠 수 있다.
+아래 5개 접기식 항목은 교수님 [GPIO_DOC](https://github.com/gotree94/STM32/tree/main/NUCLEO_F411RE/GPIO_DOC)의 F411 설명과 그림을 참고해 복습한 내용이다. 이 그림들은 교수님 수업 자료이며, 직접 수행하고 촬영한 실습은 위 1~4절에 따로 기록했다.
 
 ### 5.1 Architecture
 
@@ -247,77 +244,144 @@ GPIO 핀은 입력, 출력, 대체 기능, 아날로그 모드 중 하나로 설
 
 </details>
 
-### 5.5 Test
+### 5.5 Test — F411 디버깅 예제
 
 <details>
-<summary><strong>Test — STM32F411 (그림 15장)</strong></summary>
+<summary><strong>교수님 F411 Test 순서와 참고 화면 15장 펼치기</strong></summary>
 
-교수님 예제는 `WritePin()`을 사용하는 디버깅 순서이다. 직접 기록한 실습 코드는 `TogglePin()`을 사용했으므로 두 코드를 동일하게 취급하지 않는다.
+이 부분은 [교수님 GPIO_DOC의 F411 Test](https://github.com/gotree94/STM32/tree/main/NUCLEO_F411RE/GPIO_DOC#4-test)를 복습하며 정리했다. **아래 15장은 교수님 원본 자료의 화면이며, 내가 직접 실행·촬영한 결과가 아니다.**
 
-**Expressions에서 포트 확인**
+#### 먼저 알아둘 것
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_001.png" alt="교수님 F411 자료: Expressions에서 포트 확인" width="760">
+| 구분 | 뜻 | 디버깅할 때 확인하는 내용 |
+|---|---|---|
+| Expressions | 변수·포인터 값 관찰 | `LD2_GPIO_Port` |
+| SFR | 주변장치 제어 레지스터 | `MODER`, `ODR`, `IDR`, `BSRR` |
+| Core Registers | CPU 내부 레지스터 | `R0~R12`, `SP`, `LR`, `PC` |
+| Disassembly | C 코드를 컴파일한 명령 확인 | 함수 호출과 메모리 쓰기 명령 |
+| Memory | 주소의 실제 데이터 확인 | GPIOA 시작 주소 `0x40020000` |
 
-**SFR 창**
+STM32F411의 GPIOA는 `0x40020000`부터 시작한다. 따라서 `MODER`는 `+0x00`, `ODR`은 `+0x14`, `BSRR`은 `+0x18`이다. 교수님 예제의 `HAL_GPIO_WritePin()`은 **BSRR에 값을 써서** 핀을 설정하거나 해제하는 과정을 보여 준다.
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_002.png" alt="교수님 F411 자료: SFR 창" width="760">
+#### 교수님 화면 순서
 
-**CPU 코어 레지스터**
+**1. Expressions에 `LD2_GPIO_Port` 추가**
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_003.png" alt="교수님 F411 자료: CPU 코어 레지스터" width="760">
+LED 핀과 연결된 GPIO 포트 정보를 디버거에서 확인하는 방법.
 
-**Disassembly 메뉴**
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_001.png" alt="교수님 F411 Test 참고자료: Expressions에 LD2_GPIO_Port 추가" width="760">
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_013.png" alt="교수님 F411 자료: Disassembly 메뉴" width="760">
+**2. SFR 창에서 GPIO 레지스터 확인**
 
-**Disassembly 화면**
+`MODER`, `ODR`, `IDR`, `BSRR` 등 주변장치 레지스터를 확인.
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_014.png" alt="교수님 F411 자료: Disassembly 화면" width="760">
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_002.png" alt="교수님 F411 Test 참고자료: SFR 창에서 GPIO 레지스터 확인" width="760">
 
-**코어 구성**
+**3. Core Registers 확인**
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_MCU_Core.png" alt="교수님 F411 자료: 코어 구성" width="760">
+CPU에서 사용하는 `R0~R12`, `SP`, `LR`, `PC` 확인.
 
-**Memory 창**
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_003.png" alt="교수님 F411 Test 참고자료: Core Registers 확인" width="760">
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_004.png" alt="교수님 F411 자료: Memory 창" width="760">
+**4. Disassembly 창 열기**
 
-**HAL_Init**
+교수님 자료의 `Window → Show View → Other → Disassembly` 메뉴.
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_005.png" alt="교수님 F411 자료: HAL_Init" width="760">
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_013.png" alt="교수님 F411 Test 참고자료: Disassembly 창 열기" width="760">
 
-**SystemClock_Config**
+**5. Disassembly 화면 확인**
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_006.png" alt="교수님 F411 자료: SystemClock_Config" width="760">
+C 코드와 대응하는 어셈블리 명령을 살펴보는 화면.
 
-**MX_GPIO_Init**
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_014.png" alt="교수님 F411 Test 참고자료: Disassembly 화면 확인" width="760">
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_007.png" alt="교수님 F411 자료: MX_GPIO_Init" width="760">
+**6. Cortex-M4 코어 레지스터 구성**
 
-**USART2 초기화 예시**
+주변장치용 SFR과 CPU 코어 레지스터의 차이 이해.
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_008.png" alt="교수님 F411 자료: USART2 초기화 예시" width="760">
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_MCU_Core.png" alt="교수님 F411 Test 참고자료: Cortex-M4 코어 레지스터 구성" width="760">
 
-**WritePin High**
+**7. Memory 창에서 `0x40020000` 입력**
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_009.png" alt="교수님 F411 자료: WritePin High" width="760">
+STM32F411 GPIOA의 시작 주소에서 레지스터 메모리를 확인.
 
-**HAL_Delay**
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_004.png" alt="교수님 F411 Test 참고자료: Memory 창에서 0x40020000 입력" width="760">
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_010.png" alt="교수님 F411 자료: HAL_Delay" width="760">
+**8. `HAL_Init()` 단계**
 
-**WritePin Low**
+HAL 초기화 위치를 확인하는 교수님 예제.
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_011.png" alt="교수님 F411 자료: WritePin Low" width="760">
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_005.png" alt="교수님 F411 Test 참고자료: HAL_Init() 단계" width="760">
 
-**다음 HAL_Delay**
+**9. `SystemClock_Config()` 단계**
 
-<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_012.png" alt="교수님 F411 자료: 다음 HAL_Delay" width="760">
+시스템 클록 설정 위치를 확인하는 교수님 예제.
 
-**내 실습과의 차이:** 수업 자료는 `HAL_GPIO_WritePin()`으로 High/Low를 지정해서 확인하고, 내 코드에서는 `HAL_GPIO_TogglePin()`을 사용해 현재 상태를 반전했다.
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_006.png" alt="교수님 F411 Test 참고자료: SystemClock_Config() 단계" width="760">
+
+**10. `MX_GPIO_Init()` 단계**
+
+GPIO 클록·핀 초기화가 수행되는 위치 확인.
+
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_007.png" alt="교수님 F411 Test 참고자료: MX_GPIO_Init() 단계" width="760">
+
+**11. `MX_USART2_UART_Init()` 단계**
+
+교수님 프로젝트에 포함된 USART2 초기화 화면.
+
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_008.png" alt="교수님 F411 Test 참고자료: MX_USART2_UART_Init() 단계" width="760">
+
+**12. `HAL_GPIO_WritePin(..., 1)`**
+
+교수님 예제의 LED 출력 High 설정.
+
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_009.png" alt="교수님 F411 Test 참고자료: HAL_GPIO_WritePin(..., 1)" width="760">
+
+**13. `HAL_Delay(1000)`**
+
+출력 변경 후 1초 대기.
+
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_010.png" alt="교수님 F411 Test 참고자료: HAL_Delay(1000)" width="760">
+
+**14. `HAL_GPIO_WritePin(..., 0)`**
+
+교수님 예제의 LED 출력 Low 설정.
+
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_011.png" alt="교수님 F411 Test 참고자료: HAL_GPIO_WritePin(..., 0)" width="760">
+
+**15. 두 번째 `HAL_Delay(1000)`**
+
+다음 출력 변경 전 1초 대기.
+
+<img src="https://raw.githubusercontent.com/gotree94/STM32/main/NUCLEO_F411RE/GPIO_DOC/img/F411_R_012.png" alt="교수님 F411 Test 참고자료: 두 번째 HAL_Delay(1000)" width="760">
+
+#### 교수님 코드와 내가 작성한 코드의 차이
+
+**교수님 F411 Test 예제**는 출력 값을 지정하는 `HAL_GPIO_WritePin()` 방식이다.
+
+```c
+HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 1);
+HAL_Delay(1000);
+HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, 0);
+HAL_Delay(1000);
+```
+
+**내가 작성한 실습 코드**는 현재 출력 상태를 반대로 바꾸는 `HAL_GPIO_TogglePin()` 방식이다.
+
+```c
+HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+HAL_Delay(1000);
+```
+
+두 방식 모두 LED의 High/Low 출력을 바꿀 수 있지만, **서로 다른 함수와 실습 기록**이다. 위의 교수님 `WritePin` 코드, Core Registers, Disassembly 화면을 내가 직접 실행한 것처럼 기록하지 않는다.
+
+#### 내가 확인한 화면과 추가로 확인할 내용
+
+- **직접 확인:** LED 토글 코드, GPIOA Expressions 화면, 상승·하강 에지 사진(위 1~3절)
+- **핀 구분:** PA5는 LD2 LED에 연결된 핀이고, PA6은 별도 외부 GPIO 핀. 디버거의 `MODER = 0xA80010A0`은 PA6 출력 설정이 보이는 화면이다
+- **추가 확인:** `LD2_Pin` 정의, `MX_GPIO_Init()`에서 사용된 핀 설정, 실제 신호의 한 주기
 
 </details>
-
 
 
 ## 참고자료 및 확인할 점
